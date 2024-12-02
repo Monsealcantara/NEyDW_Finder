@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finder{% endblock %}</title>
+    <!-- Agrega aquí estilos globales -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    {% block style %} 
+    <!-- Estilos y librerias -->
+    {% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                {% if user.is_authenticated %}
+                    {%if user.role == 'trabajador'%}
+                     <li><a href="{% url 'users:worker_home' %}">Home</a></li>
+                     <li><a href="{% url 'jobs:job_list' %}">Trabajos</a></li>
+                     <li><a href="{% url 'users:list_services' %}">Servicios</a></li>
+                     <li><a href="{% url 'materials:tienda' %}">Tienda</a></li>
+                     <li><a href="{% url 'carrito:ver_carrito' %}">Carrito</a></li>
+                     <li><a href="{% url 'venta:compras_lista'%}">Compras</a></li>
+                     {% elif user.role == 'cliente' %}
+                     <li><a href="{% url 'users:client_home' %}">Home</a></li>
+                     <li><a href="{% url 'jobs:list_quotations' %}">Cotizaciones</a></li>
+
+                     {% elif user.role == 'empresa' %}
+                     <li><a href="{% url 'users:empresa_home' %}">Home</a></li>
+                     <li><a>Ventas</a></li>
+                     {% endif %}
+                    <li><a href="{% url 'chat:chat_list' %}">Chat</a></li>
+                    <li><a href="{% url 'notifications:notification_list' %}">Notificaciones</a></li>
+                    <li><a href="{% url 'users:profile' %}">Mi Perfil</a></li>
+                    <li><a href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}
+        <!-- Contenido dinámico se insertará aquí -->
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2024 Finder. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

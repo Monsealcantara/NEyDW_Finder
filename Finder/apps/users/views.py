@@ -1,0 +1,276 @@
+# apps/users/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import IntegrityError
+from .forms import ProfileFormWorker, ProfileFormClient, UserEditForm, ServiceForm
+from .models import User, Worker, Client, Service, WorkerService, Keyword
+from apps.subscriptions.models import Subscription, SubscriptionUser
+from apps.materials.models import Material
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+
+        print(user)
+        if user is not None:
+            # Si las credenciales son correctas, inicia la sesión
+            login(request, user)
+            
+            # Verificar el rol del usuario y redirigir según el tipo
+            if user.role == 'cliente':
+                return redirect('users:client_home')  # Redirige a la vista de cliente
+            elif user.role == 'trabajador':
+                return redirect('users:worker_home')  # Redirige a la vista de trabajador
+            elif user.role == 'empresa':
+                return redirect('users:empresa_home') 
+            else:
+                # Si no tiene un rol asignado (opcional, pero recomendable tenerlo manejado)
+                messages.error(request, 'No se ha asignado un rol al usuario.')
+                return redirect('login')
+        else:
+            messages.error(request, 'Credenciales incorrectas.')
+            return redirect('login')
+
+    return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)  # Finaliza la sesión del usuario
+    return redirect('login') 
+
+def register_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        email = request.POST['email']  # Captura el correo electrónico
+        role = request.POST['role']
+
+        # Verifica si el usuario ya existe
+        if User.objects.filter(username=username).exists():
+            return render(request, 'users/register.html', {'error': 'El usuario ya existe.'})
+
+        # Crea el usuario base
+        try:
+            user = User.objects.create_user(username=username, password=password, email=email, role=role)
+
+            # Asigna el perfil según el rol
+            if role == 'cliente':
+                if Client.objects.filter(user=user).exists():
+                    return render(request, 'users/register.html', {'error': 'Este usuario ya está registrado como cliente.'})
+                Client.objects.create(user=user)
+
+            elif role == 'trabajador':
+                if Worker.objects.filter(user=user).exists():
+                    return render(request, 'users/register.html', {'error': 'Este usuario ya está registrado como trabajador.'})
+                Worker.objects.create(user=user)
+            suscription=Subscription.objects.get(plan_name='GRATUITA')
+            SubscriptionUser.objects.create(user=user, suscription=suscription, is_free=True)
+            return redirect('login')
+        except IntegrityError:
+            return render(request, 'users/register.html', {'error': 'Ocurrió un error al registrar al usuario.'})
+    return render(request, 'users/register.html')
+
+@login_required
+def worker_home(request):
+    return render(request, 'users/home_empleado.html')
+
+@login_required
+def client_home(request):
+    return render(request, 'users/home_cliente.html')
+
+@login_required
+def empresa_home(request):
+    materials = Material.objects.filter(empresa=request.user)
+    return render(request, 'users/home_empresa.html', {'materials': materials})
+
+@login_required
+def profile_view(request):
+    #Implementacion de los datos de perfil del cliente
+
+    #Implementacion de los datos de perfil del trabajador
+    return render(request, 'users/profile.html', {'user': request.user})
+    
+@login_required
+def edit_profile_view(request):
+    # Determinamos si el usuario es trabajador o cliente
+    if hasattr(request.user, 'worker_profile'):  # Es un trabajador
+        profile = request.user.worker_profile
+        form_profile = ProfileFormWorker(instance=profile)
+        form_class = ProfileFormWorker
+    else:  # Es un cliente
+        profile, created = Client.objects.get_or_create(user=request.user)
+        form_profile = ProfileFormClient(instance=profile)
+        form_class = ProfileFormClient
+
+    # Formulario para editar los datos del usuario
+    form_user = UserEditForm(instance=request.user)
+
+    if request.method == 'POST':
+        form_user = UserEditForm(request.POST, instance=request.user)
+        form_profile = form_class(request.POST, instance=profile)
+
+        if form_user.is_valid() and form_profile.is_valid():
+            form_user.save()  # Guarda los datos del usuario
+            form_profile.save()  # Guarda los datos adicionales del perfil
+            return redirect('users:profile')  # Redirige a la página de perfil después de guardar
+
+    return render(request, 'users/edit_profile.html', {
+        'form_user': form_user,
+        'form_profile': form_profile
+    })
+
+# Vista para listar los servicios ofrecidos por el trabajador
+@login_required
+def list_services(request):
+    services = Service.objects.filter(worker=request.user.worker_profile)  # Solo los servicios del trabajador actual
+    print(services)
+    return render(request, 'users/list_services.html', {'services': services})  # Pasar 'services' y no 'users'
+
+@login_required
+def create_service(request):
+    if request.method == 'POST':
+        form = ServiceForm(request.POST)
+        
+        if form.is_valid():
+            # Guardar el servicio primero
+            service = form.save(commit=False)
+            service.worker = request.user.worker_profile  # Asegúrate de asociar el trabajador
+            service.save()  # Guarda el servicio
+            
+            # Asociar las palabras clave existentes
+            keywords = form.cleaned_data['keywords']
+            service.keywords.set(keywords)  # Asocia las palabras clave existentes
+            
+            # Crear nuevas palabras clave si el usuario las ha ingresado
+            new_keywords = form.cleaned_data['new_keywords']
+            if new_keywords:
+                # Si el trabajador ha ingresado nuevas palabras clave
+                new_keyword = Keyword.objects.create(word=new_keywords)
+                service.keywords.add(new_keyword)  # Asocia la nueva palabra clave
+
+            messages.success(request, 'Servicio creado exitosamente.')
+            return redirect('users:list_services')  # Redirige a la lista de servicios
+
+    else:
+        form = ServiceForm()
+    
+    return render(request, 'users/create_service.html', {'form': form})
+
+    # Aseguramos que el usuario autenticado es un trabajador
+    try:
+        worker = Worker.objects.get(user=request.user)
+    except Worker.DoesNotExist:
+        # Si el usuario no es un trabajador, mostrar un mensaje de error
+        messages.error(request, "Debes ser un trabajador para crear un servicio.")
+        return redirect('some-error-page')  # Redirige a una página de error o a donde lo consideres adecuado
+
+    if request.method == 'POST':
+        form = ServiceForm(request.POST)
+        
+        if form.is_valid():
+            # Guardar el servicio, pero sin guardar la relación 'worker'
+            service = form.save(commit=False)
+            
+            # Asignamos al trabajador actual al servicio
+            service.worker = worker
+            service.save()  # Guardamos el servicio
+            
+            # Asociar las palabras clave existentes
+            keywords = form.cleaned_data['keywords']
+            service.keywords.set(keywords)  # Asociamos las palabras clave existentes
+            
+            # Agregar nuevas palabras clave
+            new_keywords = form.cleaned_data['new_keywords']
+            if new_keywords:
+                # Si el trabajador ha ingresado nuevas palabras clave, las agregamos
+                keyword, created = Keyword.objects.get_or_create(name=new_keywords)
+                service.keywords.add(keyword)  # Agregar la nueva palabra clave al servicio
+                
+            service.save()  # Guardar cambios finales en el servicio
+            messages.success(request, "Servicio creado exitosamente.")
+            return redirect('some-success-page')  # Redirige a la página de éxito o donde lo desees
+    
+    else:
+        form = ServiceForm()
+    
+    return render(request, 'users:create_service.html', {'form': form})
+
+# Vista para editar un servicio existente
+@login_required
+def edit_service(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.user != service.worker.user:
+        return redirect('users:list_services')  # Si no es el trabajador, redirige
+
+    if request.method == 'POST':
+        form = ServiceForm(request.POST, instance=service)
+        if form.is_valid():
+            form.save()
+            return redirect('users:list_services')
+    else:
+        form = ServiceForm(instance=service)
+    
+    return render(request, 'users/edit_service.html', {'form': form})
+
+# Vista para eliminar un servicio
+@login_required
+def delete_service(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.user != service.worker.user:
+        return redirect('users:list_services')  # Si no es el trabajador, redirige
+    
+    if request.method == 'POST':
+        service.delete()
+        return redirect('users:list_services')
+
+    return render(request, 'users/delete_service.html', {'users': service})
+
+@login_required
+def search_services(request):
+    # Obtenemos la palabra clave de la búsqueda
+    keyword = request.GET.get('keyword')
+    
+    # Obtenemos el usuario actual
+    user = request.user
+
+    # Comprobamos si el usuario tiene una suscripción y su tipo
+    subscription_user = SubscriptionUser.objects.filter(user=user).first()
+    
+    # Lógica para la búsqueda de servicios
+    services = []
+    false_search = True
+
+    if keyword:
+        # Buscamos la palabra clave en el modelo Keyword
+        keyword_obj = Keyword.objects.filter(word__icontains=keyword).first()  # Búsqueda insensible a mayúsculas
+        if keyword_obj:
+            # Si la palabra clave existe, buscamos los servicios relacionados
+            services = Service.objects.filter(keywords=keyword_obj)
+
+            # Si es un plan gratuito, mostramos solo algunos servicios (limitados)
+            if subscription_user and subscription_user.is_free:
+                services = services[:5]  # Limitar la cantidad de servicios mostrados (por ejemplo, 5)
+
+            false_search = not bool(services)  # Si no se encuentran servicios, indicamos que fue una búsqueda fallida
+
+    return render(request, 'users/home_cliente.html', {
+        'services': services, 
+        'false_search': false_search, 
+    })
+
+    
+@login_required
+def ver_perfil(request, pk):
+    # Obtener el usuario y su perfil de trabajador
+    user = User.objects.get(pk=pk)
+    
+    # Verificar si el usuario tiene un perfil de trabajador asociado
+    try:
+        worker_profile = user.worker_profile
+    except Worker.DoesNotExist:
+        worker_profile = None
+    
+    return render(request, 'users/ver_perfil.html', {'user': user, 'worker_profile': worker_profile})

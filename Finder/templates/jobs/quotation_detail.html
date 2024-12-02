@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block style %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/jobs/quotation_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="cotizacion-detail">
+  <h2>Detalle de Cotización</h2>
+  
+  <p><strong>Servicio:</strong> {{ quotation.service.name }}</p>
+  <p><strong>Descripción:</strong> {{ quotation.description }}</p>
+  <p><strong>Presupuesto Inicial:</strong> {{ quotation.budget }}</p>
+  
+  {% if quotation.counter_offer  %}
+    <p><strong>Estado:</strong> Se ha enviado una contraoferta</p>
+    <p><strong>Precio (Contraoferta):</strong> {{ quotation.counter_offer }}</p>
+    <p><strong>Tiempo (Contraoferta):</strong> {{ quotation.time_estimate }}</p>
+
+    {% if not quotation.counter_offer_accepted  %}
+    <div class="cotizacion-actions">
+      <a href="{% url 'jobs:aceptar_quotations_client' quotation.id %}">Aceptar</a>
+      <a href="{% url 'jobs:rechazar_quotations_cliente' quotation.id %}">Rechazar</a>
+    </div>
+    {% else %}
+      <p><strong>Estado:</strong> Contraoferta Aceptada</p>
+      <a href="{% url 'jobs:finalize_quotation' quotation.id %}" class="btn btn-finalizar">Finalizar</a>
+    {% endif %}
+  {% elif quotation.accepted %}
+    <p><strong>Estado:</strong> Aceptada</p>
+    <a href="{% url 'jobs:finalize_quotation' quotation.id %}">Finalizar</a>
+  {% elif not quotation.is_active and not quotation.accepted %}
+    <p><strong>Estado:</strong> Rechazada</p>
+  {% else %}
+    <p><strong>Estado:</strong> Esperando respuesta</p>
+  {% endif %}
+    
+  <a href="{% url 'jobs:list_quotations' %}">Volver a las cotizaciones</a>
+</div>
+{% endblock %}

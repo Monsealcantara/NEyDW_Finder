@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Nuevo Servicio{% endblock %}
+
+{% block style %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/users/editarPerfil.css' %}">
+{% endblock %}
+
+{% block content %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="content">
+    <!-- Formulario para editar los datos del usuario -->
+    <h3>Editar Información de Usuario</h3>
+    {{ form_user.as_p }}
+    
+    <!-- Formulario para editar el perfil del trabajador o cliente -->
+    {{ form_profile.as_p }}
+  
+    <!-- Formulario de datos del trabajador o cliente -->
+    {% if worker_form %}
+      <h2>Datos del Trabajador</h2>
+      {{ worker_form.as_p }}
+    {% endif %}
+    
+    {% if client_form %}
+      <h2>Datos del Cliente</h2>
+      {{ client_form.as_p }}
+    {% endif %}
+    
+    <button type="submit">Guardar Cambios</button>
+  </div>
+  </form>
+
+
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Crear Nuevo Servicio{% endblock %}
+
+{% block style %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/users/editarPerfil.css' %}">
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  
+  <!-- Formulario para editar los datos del usuario -->
+  <h3>Editar Información de Usuario</h3>
+  {{ form_user.as_p }}
+  
+  <!-- Formulario para editar el perfil del trabajador o cliente -->
+  
+  {{ form_profile.as_p }}
+
+ 
+  <form method="POST">
+    {% csrf_token %}
+    {{ user_form.as_p }}
+     {% if worker_form %}
+        <h2>Datos del Trabajador</h2>
+        {{ worker_form.as_p }}
+    {% endif %}
+    
+    {% if client_form %}
+        <h2>Datos del Cliente</h2>
+        {{ client_form.as_p }}
+    {% endif %}
+    
+    <button type="submit">Guardar Cambios</button>
+</form>
+{% endblock %} {% endcomment %}
+

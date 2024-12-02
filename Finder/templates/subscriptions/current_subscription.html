@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block style %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/suscriptions/current_subs.css' %}">
+{% endblock %}
+{% block content %}
+<div class="subscription-container">
+  <h2>Tu Suscripción Actual</h2>
+  
+  {% if subscription %}
+  <div class="subscription-details">
+    <p>Plan: {{ subscription.suscription.plan_name }}</p>
+    <p>Precio: ${{ subscription.suscription.price }}</p>
+    <p>Fecha de inicio: {{ subscription.start_date }}</p>
+    <p>Fecha de finalización: {{ subscription.end_date }}</p>
+
+    {% if subscription.is_free %}
+      <p>Tu suscripción es gratuita.</p>
+    {% else %}
+      <p>Tu suscripción es premium.</p>
+    {% endif %}
+  </div>
+  {% else %}
+    <p>No tienes una suscripción activa.</p>
+  {% endif %}
+  <div class="subscription-actions">
+  <a href="{% url 'subscriptions:subscription_list' %}" class="btn-change-subscription">Cambiar suscripción</a>
+
+  <a href="{% url 'users:profile' %}" class="btn-back-profile">Regresar a perfil</a>
+  </div>
+</div>
+  {% endblock %}

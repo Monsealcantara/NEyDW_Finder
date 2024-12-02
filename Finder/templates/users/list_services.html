@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Trabajos{% endblock %}
+
+{% block style %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/users/list_services.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="content">
+<h1>Servicios Ofrecidos</h1>
+<ul>
+  {% for service in services %}
+    <li class="lista-serv">
+      <p><strong>Nombre del Servicio:</strong> {{ service.name }}</p> 
+      <p><strong>Descripción:</strong> {{ service.description }}</p>
+      <p><strong>Palabras clave:</strong> 
+        {% for keyword in service.keywords.all %}
+            {{ keyword.word }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+      <a class="buttons" href="{% url 'users:edit_service' service.pk %}">Editar</a>| 
+      <a class="buttons" href="{% url 'users:delete_service' service.pk %}">Eliminar</a>
+    </li>
+  {% empty %}
+    <li>No hay servicios disponibles.</li>
+  {% endfor %}
+</ul>
+
+<a href="{% url 'users:create_service' %}" class="crear-btn">Crear Nuevo Servicio</a>
+</div>
+{% endblock %}

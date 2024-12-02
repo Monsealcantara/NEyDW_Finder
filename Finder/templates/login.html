@@ -1,0 +1,42 @@
+{% load static %}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Finder Login</title>
+    <link rel="stylesheet" href="{% static 'css/loginCSS.css' %}">
+    </head>
+    <body>
+        <div class="formulario">
+            <div class="logo">
+                <img src="{% static 'images/Finder-LogoHombre.png' %}" alt="Logo">
+                <h1>Finder</h1>
+            </div>
+    
+            <form method="POST">
+                {% csrf_token %}
+                <h2>Inicio de Sesión</h2>
+                <!-- Campo de correo electrónico -->
+                <div class="input-container">
+                    <input type="text" id="username" name="username" required>
+                    <label for="email">Usuario</label>
+                </div>
+    
+                <!-- Campo de contraseña con funcionalidad de mostrar/ocultar -->
+                <div class="input-container">
+                    <input type="password" id="password" name="password" required>
+                    <label for="password">Contraseña</label>
+                    <button type="button" id="togglePassword" class="toggle-password">🙈</button>
+                </div>
+    
+                <div class="recordar">
+                    <p><a class="recordar" href="{% url 'password_reset' %}">Olvidé mi contraseña</a></p>
+                </div>
+                <input type="submit" value="Iniciar sesión">
+                <p><a class="recordar" href="{% url 'register' %}">Registrarse</a></p>
+            </form>
+        </div>
+        {% comment %} <script src="loginJs.js"></script> {% endcomment %}
+    </body>
+    </html> 
