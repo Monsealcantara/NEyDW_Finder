@@ -1,0 +1,71 @@
+
+/* Container for content */
+.container {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    flex-grow: 1; /* Esto asegura que el contenido crezca y ocupe el espacio restante */
+    padding-bottom: 60px; /* Agrega espacio adicional en la parte inferior */
+    max-width: 900px; /* Limita el ancho del contenedor para que no ocupe toda la pantalla */
+    margin: 0 auto; /* Centra el contenido en la pantalla */
+
+}
+
+/* Header Styles */
+h1 {
+    font-size: 2.5em;
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin-top: 20px;
+    color: #007bff;
+}
+
+/* List Styles */
+.container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.container ul li {
+    background-color: #f4f4f4;
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1em;
+}
+
+.container ul li span {
+    font-weight: bold;
+}
+
+.crear-btn {
+    align-self: flex-end;
+    display: inline-block;
+    padding: 7.5px 15px;
+    background-color: #007bff;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 20px;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 20px;
+}
+
+/* Botón hover para "Crear Nuevo Servicio" */
+.crear-btn:hover {
+    background-color: #1983e6;
+}
